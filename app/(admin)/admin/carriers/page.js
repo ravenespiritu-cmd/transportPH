@@ -6,8 +6,10 @@ import DataTable from "@/components/admin/DataTable";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import PageHeader from "@/components/shared/PageHeader";
 import { toast } from "sonner";
+import useAuth from "@/hooks/useAuth";
 
 export default function CarriersPage() {
+  const { isAdmin } = useAuth();
   const [items, setItems] = useState([]);
   const [form, setForm] = useState({ name: "", type: "airline", country: "", contact_email: "" });
 
@@ -78,7 +80,7 @@ export default function CarriersPage() {
         ]}
         data={items}
         onEdit={editCarrier}
-        onDelete={deleteCarrier}
+        onDelete={isAdmin ? deleteCarrier : undefined}
       />
     </div>
   );

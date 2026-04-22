@@ -6,8 +6,10 @@ import DataTable from "@/components/admin/DataTable";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import PageHeader from "@/components/shared/PageHeader";
 import { toast } from "sonner";
+import useAuth from "@/hooks/useAuth";
 
 export default function VehiclesPage() {
+  const { isAdmin } = useAuth();
   const [items, setItems] = useState([]);
   const [carriers, setCarriers] = useState([]);
   const [form, setForm] = useState({ carrier_id: "", model: "", type: "aircraft", total_seats: 100, status: "in_service" });
@@ -83,7 +85,7 @@ export default function VehiclesPage() {
         ]}
         data={items}
         onEdit={editVehicle}
-        onDelete={deleteVehicle}
+        onDelete={isAdmin ? deleteVehicle : undefined}
       />
     </div>
   );

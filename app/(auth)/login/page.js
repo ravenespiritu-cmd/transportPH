@@ -35,7 +35,7 @@ export default function LoginPage() {
       const { data } = await api.post("/auth/login", form);
       login(data.data.token, data.data.user);
       const role = data.data.user.role;
-      router.push(role === "admin" ? "/admin/dashboard" : "/passenger/dashboard");
+      router.push(role === "passenger" ? "/passenger/dashboard" : "/admin/dashboard");
     } catch (err) {
       toast.error(err?.response?.data?.message || "Login failed");
     }

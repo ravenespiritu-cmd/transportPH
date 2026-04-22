@@ -3,17 +3,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Bell, LogOut, Menu, Plane, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +17,8 @@ const roleStyles = {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
   const pathname = usePathname();
   const { role, logout, user } = useAuth();
 
@@ -42,6 +36,16 @@ export default function Navbar() {
         ];
 
   const initials = `${user?.first_name?.[0] || ""}${user?.last_name?.[0] || ""}`.toUpperCase() || "TP";
+
+  useEffect(() => {
+    const onOutsideClick = (event) => {
+      if (!profileRef.current?.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onOutsideClick);
+    return () => document.removeEventListener("mousedown", onOutsideClick);
+  }, []);
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 h-16 border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -75,27 +79,37 @@ export default function Navbar() {
           >
             <Bell className="h-5 w-5" />
           </button>
-          {role ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="rounded-full">
+          {user ? (
+            <div className="relative" ref={profileRef}>
+              <button
+                type="button"
+                onClick={() => setProfileOpen((value) => !value)}
+                className="rounded-full ring-offset-2 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
                 <Avatar className="h-9 w-9 border border-slate-200">
                   <AvatarFallback className="bg-slate-100 text-xs font-semibold text-slate-700">{initials}</AvatarFallback>
                 </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="space-y-1">
-                  <p className="font-medium text-slate-900">{user?.first_name || "User"}</p>
-                  <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide", roleStyles[role] || roleStyles.passenger)}>
-                    {role || "passenger"}
-                  </span>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </button>
+              {profileOpen ? (
+                <div className="absolute right-0 top-11 z-50 w-56 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                  <div className="space-y-1 px-2 py-2">
+                    <p className="text-sm font-medium text-slate-900">{user?.first_name || "User"}</p>
+                    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide", roleStyles[role] || roleStyles.passenger)}>
+                      {role || "passenger"}
+                    </span>
+                  </div>
+                  <div className="my-1 h-px bg-slate-200" />
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-red-600 transition-colors duration-150 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </button>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <Link href="/login" className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-100">
               Login

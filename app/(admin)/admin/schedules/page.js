@@ -8,8 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import PageHeader from "@/components/shared/PageHeader";
 import { formatDate, formatTime24 } from "@/lib/format";
 import { toast } from "sonner";
+import useAuth from "@/hooks/useAuth";
 
 export default function SchedulesPage() {
+  const { isAdmin } = useAuth();
   const [items, setItems] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -109,7 +111,7 @@ export default function SchedulesPage() {
           },
         ]}
         data={items}
-        onDelete={deleteSchedule}
+        onDelete={isAdmin ? deleteSchedule : undefined}
       />
     </div>
   );
