@@ -17,7 +17,9 @@ export default function AppShell({ children }) {
   const pathname = usePathname();
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/register");
   const isAdminPage = pathname.startsWith("/admin");
+  const isStandaloneDarkPage = ["/dashboard", "/staff-role", "/passenger-role"].includes(pathname);
   const showFooter = pathname === "/";
+  const isHome = pathname === "/";
 
   if (isAuthPage) {
     return (
@@ -42,11 +44,21 @@ export default function AppShell({ children }) {
     );
   }
 
+  if (isStandaloneDarkPage) {
+    return (
+      <AnimatePresence mode="wait">
+        <motion.main key={pathname} {...pageMotion} className="min-h-screen bg-slate-900">
+          {children}
+        </motion.main>
+      </AnimatePresence>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       <AnimatePresence mode="wait">
-        <motion.main key={pathname} {...pageMotion} className="px-4 pb-10 pt-20 md:px-6">
+        <motion.main key={pathname} {...pageMotion} className={`px-4 pb-10 md:px-6 ${isHome ? "pt-0" : "pt-5"}`}>
           {children}
         </motion.main>
       </AnimatePresence>

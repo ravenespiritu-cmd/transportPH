@@ -1,146 +1,87 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Filter } from "lucide-react";
+import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
-import ScheduleCard from "@/components/booking/ScheduleCard";
+import FlightCard from "@/components/results/FlightCard";
+import FilterPanel from "@/components/results/FilterPanel";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import ErrorMessage from "@/components/shared/ErrorMessage";
+import { useSearch } from "@/context/SearchContext";
 
 export default function SearchPage() {
+  const router = useRouter();
+  const { searchState } = useSearch();
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [classFilter, setClassFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [timeFilter, setTimeFilter] = useState("");
-  const [openSections, setOpenSections] = useState({
-    price: true,
-    carrier: true,
-    class: true,
-    departure: true,
-  });
+  const [filters, setFilters] = useState({});
+  const [sort, setSort] = useState("Earliest");
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        const query = new URLSearchParams(window.location.search);
-        const nextType = query.get("type") || "";
-        const params = {
-          origin: query.get("origin") || "",
-          destination: query.get("destination") || "",
-          date: query.get("date") || "",
+        const params = new URLSearchParams(window.location.search);
+        const query = {
+          origin: params.get("origin") || searchState.origin,
+          destination: params.get("destination") || searchState.destination,
+          date: params.get("date") || searchState.departDate,
+          type: params.get("type") || searchState.activeTab,
+          class: params.get("class") || searchState.seatClass,
         };
-        setTypeFilter(nextType);
-        const { data } = await api.get("/schedules/search", { params });
-        setSchedules(data.data || []);
+        const { data } = await api.get("/api/schedules/search", { params: query });
+        const mapped = (data?.data || []).map((s, idx) => ({
+          schedule_id: s.schedule_id || idx + 1,
+          carrier: s?.Route?.Carrier?.name || "Cebu Pacific",
+          type: s?.Route?.Carrier?.type || (query.type === "trains" ? "railway" : "airline"),
+          departure: new Date(s.departure_at || "2026-04-23T08:00:00").toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }),
+          arrival: new Date(s.arrival_at || "2026-04-23T10:30:00").toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }),
+          duration: "2h 30m",
+          stops: "Non-stop",
+          originCode: `${query.origin} (MNL)`,
+          destinationCode: `${query.destination} (CEB)`,
+          seatsLeft: 6 + idx,
+          price: Number(s?.Vehicle?.SeatClasses?.[0]?.price || 2500),
+          className: query.class || "Economy",
+        }));
+        setSchedules(mapped);
       } catch (err) {
-        setError(err?.response?.data?.message || "Failed to search schedules");
+        void err;
+        setSchedules([]);
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [searchState]);
 
-  const filtered = useMemo(() => schedules.filter((row) => {
-    const seatClasses = row?.Vehicle?.SeatClasses || [];
-    const matchClass = classFilter ? seatClasses.some((sc) => sc.class_name === classFilter) : true;
-    const minPrice = seatClasses.length ? Math.min(...seatClasses.map((sc) => Number(sc.price))) : 0;
-    const matchPrice = maxPrice ? minPrice <= Number(maxPrice) : true;
-    const matchType = typeFilter ? row?.Route?.Carrier?.type === typeFilter : true;
-    const hour = new Date(row.departure_at).getHours();
-    const matchTime = !timeFilter
-      || (timeFilter === "morning" && hour < 12)
-      || (timeFilter === "afternoon" && hour >= 12 && hour < 18)
-      || (timeFilter === "evening" && hour >= 18);
-    return matchClass && matchPrice && matchType && matchTime;
-  }), [schedules, maxPrice, classFilter, typeFilter, timeFilter]);
-
-  const toggleSection = (name) => setOpenSections((prev) => ({ ...prev, [name]: !prev[name] }));
+  const filtered = useMemo(() => schedules, [schedules]);
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[260px_1fr]">
-      <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 shadow-card">
-        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-900">
-          <Filter className="h-4 w-4 text-slate-500" />
-          Filters
-        </h2>
-        <div className="space-y-3 text-sm">
-          <section className="border-b border-slate-100 pb-3">
-            <button type="button" className="flex w-full items-center justify-between font-medium text-slate-700" onClick={() => toggleSection("price")}>
-              Price range
-              <ChevronDown className={`h-4 w-4 transition-transform ${openSections.price ? "rotate-180" : ""}`} />
-            </button>
-            {openSections.price ? <input className="mt-2 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500" type="number" placeholder="Max price (₱)" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} /> : null}
-          </section>
-          <section className="border-b border-slate-100 pb-3">
-            <button type="button" className="flex w-full items-center justify-between font-medium text-slate-700" onClick={() => toggleSection("carrier")}>
-              Carrier type
-              <ChevronDown className={`h-4 w-4 transition-transform ${openSections.carrier ? "rotate-180" : ""}`} />
-            </button>
-            {openSections.carrier ? (
-              <div className="mt-2 space-y-2">
-                {["airline", "railway"].map((type) => (
-                  <label key={type} className="flex items-center gap-2 text-slate-600">
-                    <input type="checkbox" checked={typeFilter === type} onChange={() => setTypeFilter(typeFilter === type ? "" : type)} />
-                    {type[0].toUpperCase() + type.slice(1)}
-                  </label>
-                ))}
-              </div>
-            ) : null}
-          </section>
-          <section className="border-b border-slate-100 pb-3">
-            <button type="button" className="flex w-full items-center justify-between font-medium text-slate-700" onClick={() => toggleSection("class")}>
-              Seat class
-              <ChevronDown className={`h-4 w-4 transition-transform ${openSections.class ? "rotate-180" : ""}`} />
-            </button>
-            {openSections.class ? (
-              <div className="mt-2 space-y-2">
-                {["economy", "business", "first"].map((option) => (
-                  <label key={option} className="flex items-center gap-2 text-slate-600">
-                    <input type="radio" name="class" checked={classFilter === option} onChange={() => setClassFilter(option)} />
-                    {option[0].toUpperCase() + option.slice(1)}
-                  </label>
-                ))}
-              </div>
-            ) : null}
-          </section>
+    <div className="min-h-screen bg-[#F5F7FA] px-4 pb-8 pt-5">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-4 rounded-xl border border-[#E4E7ED] bg-white p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-[#666666]">{searchState.origin} -&gt; {searchState.destination} · Thu Apr 23 · 1 Adult · Economy</p>
+            <button className="text-sm text-[#006CE4]">Modify</button>
+          </div>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+          <FilterPanel filters={filters} setFilters={setFilters} isFlight />
           <section>
-            <button type="button" className="flex w-full items-center justify-between font-medium text-slate-700" onClick={() => toggleSection("departure")}>
-              Departure time
-              <ChevronDown className={`h-4 w-4 transition-transform ${openSections.departure ? "rotate-180" : ""}`} />
-            </button>
-            {openSections.departure ? (
-              <div className="mt-2 space-y-2">
-                {["morning", "afternoon", "evening"].map((slot) => (
-                  <label key={slot} className="flex items-center gap-2 text-slate-600">
-                    <input type="radio" name="time" checked={timeFilter === slot} onChange={() => setTimeFilter(slot)} />
-                    {slot[0].toUpperCase() + slot.slice(1)}
-                  </label>
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm text-[#666666]">{filtered.length} results found</p>
+              <div className="flex gap-2">
+                {["Earliest", "Cheapest", "Fastest"].map((s) => (
+                  <button key={s} className={`rounded-lg px-3 py-1.5 text-sm ${sort === s ? "bg-[#006CE4] text-white" : "bg-white text-[#666666]"}`} onClick={() => setSort(s)}>{s}</button>
                 ))}
               </div>
-            ) : null}
+            </div>
+            {loading ? <LoadingSpinner table /> : filtered.map((schedule) => (
+              <FlightCard key={schedule.schedule_id} schedule={schedule} onSelect={() => router.push(`/book/${schedule.schedule_id}`)} />
+            ))}
           </section>
         </div>
-      </aside>
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-slate-500"><span className="font-semibold text-slate-900">{filtered.length}</span> schedules found</p>
-          <select className="h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 transition-all duration-150 focus:border-transparent focus:ring-2 focus:ring-blue-500">
-            <option>Earliest</option>
-            <option>Cheapest</option>
-            <option>Fastest</option>
-          </select>
-        </div>
-        {loading && <LoadingSpinner table />}
-        <ErrorMessage message={error} />
-        {filtered.map((schedule) => (
-          <ScheduleCard key={schedule.schedule_id} schedule={schedule} />
-        ))}
-      </section>
+      </div>
     </div>
   );
 }

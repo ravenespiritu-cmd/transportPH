@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import AuthProvider from "@/context/AuthContext";
+import AppProviders from "@/context/AppProviders";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
 import AppShell from "@/components/layout/AppShell";
@@ -19,12 +19,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="min-h-full bg-slate-50">
-        <AuthProvider>
+        <AppProviders>
           <TooltipProvider>
             <AppShell>{children}</AppShell>
             <Toaster richColors position="top-right" />
           </TooltipProvider>
-        </AuthProvider>
+        </AppProviders>
       </body>
     </html>
   );

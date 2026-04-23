@@ -1,79 +1,81 @@
-import SearchForm from "@/components/booking/SearchForm";
-import { CheckCircle2, ChevronRight, CreditCard, RefreshCw, Zap } from "lucide-react";
+"use client";
+
+import { Headset, Plane, ShieldCheck, Train, Zap } from "lucide-react";
+import { useSearch } from "@/context/SearchContext";
+import FlightSearchForm from "@/components/search/FlightSearchForm";
+import TrainSearchForm from "@/components/search/TrainSearchForm";
 import { formatPeso } from "@/lib/format";
 
-const stats = [
-  { value: "50+", label: "Routes" },
-  { value: "200+", label: "Daily Trips" },
-  { value: "10K+", label: "Passengers" },
-  { value: "99.9%", label: "Uptime" },
-];
-
-const features = [
-  { title: "Instant Booking", description: "Complete reservations in under a minute with a streamlined booking flow.", icon: Zap },
-  { title: "Multiple Payment Options", description: "Pay via GCash, card, cash, or bank transfer with secured processing.", icon: CreditCard },
-  { title: "Real-time Schedule Updates", description: "Live availability and departure updates so passengers stay informed.", icon: RefreshCw },
-];
-
-const popularRoutes = [
-  { from: "Manila", to: "Cebu", type: "Airline", price: 2590, window: "08:00 - 18:30" },
-  { from: "Manila", to: "Baguio", type: "Railway", price: 980, window: "06:30 - 20:00" },
-  { from: "Cebu", to: "Davao", type: "Airline", price: 2290, window: "07:15 - 21:00" },
-  { from: "Manila", to: "Legazpi", type: "Railway", price: 1190, window: "05:45 - 16:00" },
+const routes = [
+  { code: "MNL -> CEB", carrier: "Cebu Pacific", type: "Airline", price: 2500, duration: "2h 30m" },
+  { code: "MNL -> DVO", carrier: "Philippine Airlines", type: "Airline", price: 3800, duration: "1h 55m" },
+  { code: "MNL -> BIC", carrier: "PNR", type: "Railway", price: 680, duration: "5h 00m" },
+  { code: "MNL -> BTG", carrier: "PNR", type: "Railway", price: 420, duration: "2h 30m" },
 ];
 
 export default function Home() {
+  const { searchState, updateSearch } = useSearch();
+
   return (
-    <div>
-      <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 px-6 pb-20 pt-28 text-center md:pt-24">
-        <div className="absolute inset-0 bg-[length:40px_40px] bg-[linear-gradient(to_right,rgba(148,163,184,0.18)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.18)_1px,transparent_1px)] opacity-25" />
-        <div className="relative z-10 mx-auto max-w-4xl">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-            Trusted by 10,000+ passengers
-          </div>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-blue-400">Enterprise Transport System</p>
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">Book Flights & Trains Across the Philippines</h1>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-slate-300">Modern enterprise booking built for passengers and operations teams with reliable schedules, secure transactions, and live updates.</p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a href="#search" className="rounded-lg bg-blue-500 px-6 py-3 text-sm font-medium text-white transition-all duration-150 hover:bg-blue-600">
-              Search Schedules
-            </a>
+    <div className="bg-[#F5F7FA]">
+      <section className="relative h-[500px] overflow-visible bg-[linear-gradient(125deg,#0B3A8D_0%,#006CE4_40%,#2A8CFF_100%)]">
+        <div className="absolute inset-0 bg-black/25" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:32px_32px]" />
+        <div className="relative z-10 mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 text-center">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.28em] text-blue-200">TransportPH Smart Booking</p>
+          <h1 className="text-4xl font-bold text-white drop-shadow-sm md:text-5xl">Book Flights & Trains Across the Philippines</h1>
+          <p className="mt-3 max-w-2xl text-base text-blue-100">Built for Filipino travelers who need fast booking, transparent fares, and instant ticket confirmation.</p>
+          <div className="absolute -bottom-12 w-[90%] max-w-5xl">
+            {searchState.activeTab === "flights" ? <FlightSearchForm /> : <TrainSearchForm />}
           </div>
         </div>
       </section>
 
-      <section id="search" className="relative z-10 mx-auto -mt-12 max-w-5xl px-4">
-        <SearchForm />
-      </section>
-
-      <section className="border-y border-slate-100 bg-white py-10">
-        <div className="mx-auto grid max-w-6xl gap-6 px-6 text-center sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((item) => (
-            <div key={item.label}>
-              <p className="text-3xl font-bold text-slate-900">{item.value}</p>
-              <p className="mt-1 text-sm text-slate-500">{item.label}</p>
-            </div>
+      <section className="mx-auto max-w-7xl px-4 pb-12 pt-32">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-[22px] font-semibold text-[#1A1A1A]">Popular Routes</h2>
+          <a href="#" className="text-sm text-[#006CE4]">View all routes -&gt;</a>
+        </div>
+        <div className="mb-5 flex gap-2">
+          <button onClick={() => updateSearch({ activeTab: "flights" })} className={`rounded-lg px-4 py-1.5 text-sm ${searchState.activeTab === "flights" ? "bg-[#006CE4] text-white" : "bg-white text-[#666666]"}`}>Flights</button>
+          <button onClick={() => updateSearch({ activeTab: "trains" })} className={`rounded-lg px-4 py-1.5 text-sm ${searchState.activeTab === "trains" ? "bg-[#006CE4] text-white" : "bg-white text-[#666666]"}`}>Trains</button>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {routes.map((route) => (
+            <article key={route.code} className="cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white transition hover:shadow-md">
+              <div className={`flex h-20 items-center justify-center bg-gradient-to-r ${route.type === "Airline" ? "from-blue-600 to-sky-500" : "from-indigo-600 to-purple-500"} text-sm font-bold text-white`}>{route.code}</div>
+              <div className="p-3.5">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-medium text-[#666666]">{route.carrier}</p>
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${route.type === "Airline" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"}`}>{route.type}</span>
+                </div>
+                <p className="text-[11px] text-[#999999]">From</p>
+                <p className="text-lg font-bold text-[#006CE4]">{formatPeso(route.price)}</p>
+                <div className="mt-1 flex items-center justify-between text-xs text-[#666666]">
+                  <span>{route.duration}</span>
+                  <a href="/search" className="font-medium text-[#006CE4]">Book now -&gt;</a>
+                </div>
+              </div>
+            </article>
           ))}
         </div>
       </section>
 
-      <section className="bg-slate-50 px-6 py-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-10 text-center">
-            <h2 className="text-2xl font-semibold text-slate-900">Built for Enterprise Operations</h2>
-            <p className="mt-2 text-sm text-slate-500">Everything transport teams need to run dependable booking operations at scale.</p>
-          </div>
+      <section className="bg-white py-16">
+        <div className="mx-auto max-w-7xl px-4">
+          <h2 className="mb-8 text-center text-2xl font-semibold text-[#1A1A1A]">Why book with TransportPH?</h2>
           <div className="grid gap-4 md:grid-cols-3">
-            {features.map((feature) => {
-              const Icon = feature.icon;
+            {[
+              { title: "Secure Booking", text: "Your payments are protected with industry-standard encryption", icon: ShieldCheck },
+              { title: "Instant Confirmation", text: "Get your e-ticket in seconds after payment", icon: Zap },
+              { title: "24/7 Support", text: "Our team is always here to help you", icon: Headset },
+            ].map((item) => {
+              const Icon = item.icon;
               return (
-                <article key={feature.title} className="rounded-xl bg-white p-6 shadow-card transition-shadow duration-200 hover:shadow-hover">
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
-                    <Icon className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900">{feature.title}</h3>
-                  <p className="mt-2 text-sm text-slate-500">{feature.description}</p>
+                <article key={item.title} className="rounded-xl border border-gray-100 p-8 text-center transition hover:shadow-md">
+                  <span className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#EBF3FF]"><Icon className="h-5 w-5 text-[#006CE4]" /></span>
+                  <h3 className="text-lg font-semibold text-[#1A1A1A]">{item.title}</h3>
+                  <p className="mt-2 text-sm text-[#666666]">{item.text}</p>
                 </article>
               );
             })}
@@ -81,28 +83,14 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-white px-6 py-20">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mb-8 text-2xl font-semibold text-slate-900">Popular Routes</h2>
-          <div className="grid gap-4 overflow-x-auto md:grid-cols-4">
-            {popularRoutes.map((route) => (
-              <article key={`${route.from}-${route.to}`} className="min-w-[250px] rounded-xl border border-slate-200 bg-white p-5 shadow-card">
-                <p className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                  {route.from}
-                  <ChevronRight className="h-4 w-4 text-blue-500" />
-                  {route.to}
-                </p>
-                <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${route.type === "Railway" ? "bg-indigo-50 text-indigo-600" : "bg-blue-50 text-blue-600"}`}>
-                  {route.type}
-                </span>
-                <p className="mt-4 text-xl font-bold text-blue-600">From {formatPeso(route.price)}</p>
-                <p className="mt-1 text-xs text-slate-500">{route.window}</p>
-                <a href="/search" className="mt-4 inline-block text-sm font-medium text-blue-600 transition-colors duration-150 hover:text-blue-700">
-                  Book Now
-                </a>
-              </article>
-            ))}
+      <section className="mx-auto max-w-5xl px-4 pb-14">
+        <div className="flex flex-col items-start justify-between gap-4 rounded-2xl bg-[#006CE4] px-8 py-10 md:flex-row md:items-center">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-blue-200">New member exclusive</p>
+            <p className="text-3xl font-bold text-white">Get P200 off your first booking</p>
+            <p className="mt-1 text-blue-200">Use code: WELCOME200</p>
           </div>
+          <button className="rounded-lg bg-white px-6 py-3 font-semibold text-[#006CE4] hover:bg-blue-50">Sign Up Now -&gt;</button>
         </div>
       </section>
     </div>
